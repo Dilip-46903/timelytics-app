@@ -1,35 +1,39 @@
 import streamlit as st
-import pandas as pd
 import joblib
+import numpy as np
 
-# Load model
+# Load the trained model
 model = joblib.load('delivery_time_model.pkl')
 
-st.title("📦 Delivery Time Prediction")
+# App title
+st.title("📦 Timelytics - Order Delivery Time Prediction")
 
-# User inputs
-product_category = st.selectbox("Select Product Category", ['Electronics', 'Clothing', 'Books'])
-customer_location = st.selectbox("Select Customer Location", ['New York', 'Los Angeles', 'Chicago'])
-shipping_method = st.selectbox("Select Shipping Method", ['Standard', 'Express', 'Overnight'])
+# Input form
+st.header("Enter Order Details:")
 
-# Input DataFrame
-input_data = pd.DataFrame({
-    'product_category': [product_category],
-    'customer_location': [customer_location],
-    'shipping_method': [shipping_method]
-})
+product_category = st.selectbox("Product Category", ["Electronics", "Clothing", "Home", "Books", "Other"])
+customer_location = st.selectbox("Customer Location", ["Urban", "Suburban", "Rural"])
+shipping_method = st.selectbox("Shipping Method", ["Standard", "Express", "Same Day"])
 
-# Encode like training
-input_encoded = pd.get_dummies(input_data)
+# You can add more inputs if needed
+order_value = st.number_input("Order Value ($)", min_value=1.0, step=1.0)
 
-# Align with training columns
-model_columns = model.feature_names_in_
-for col in model_columns:
-    if col not in input_encoded.columns:
-        input_encoded[col] = 0
-input_encoded = input_encoded[model_columns]
+# Convert categorical inputs to numerical (you must use same encoding as during training)
+def preprocess_inputs(product_category, customer_location, shipping_method, order_value):
+    category_map = {"Electronics": 0, "Clothing": 1, "Home": 2, "Books": 3, "Other": 4}
+    location_map = {"Urban": 0, "Suburban": 1, "Rural": 2}
+    shipping_map = {"Standard": 0, "Express": 1, "Same Day": 2}
 
-# Predict
+    features = [
+        category_map[product_category],
+        location_map[customer_location],
+        shipping_map[shipping_method],
+        order_value
+    ]
+    return np.array(features).reshape(1, -1)
+
+# Prediction button
 if st.button("Predict Delivery Time"):
-    prediction = model.predict(input_encoded)
-    st.success(f"🚚 Estimated Delivery Time: {prediction[0]:.2f} days")
+    inputs = preprocess_inputs(product_category, customer_location, shipping_method, order_value)
+    prediction = model.predict(inputs)
+    st.success(f"📅 Expected Delivery Time: {prediction[0]:.2f} days")
