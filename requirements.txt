@@ -1,0 +1,7 @@
+streamlit
+pandas
+scikit-learn
+joblib
+git add requirements.txt
+git commit -m "Add requirements.txt with joblib"
+git push origin main
